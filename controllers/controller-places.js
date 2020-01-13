@@ -1,7 +1,8 @@
 const HttpError = require("../models/http-error");
+const uuid = require('uuid/v4')
 
 //This is temporary - will be replaced by the database
-const DUMMY_PLACES = [
+let DUMMY_PLACES = [
     {
         id: 'p1',
         title: 'Empire State Building',
@@ -43,7 +44,47 @@ const getPlaceByUserId = (req, res, next) => {
   res.json({ place });
 };
 
+const createPlace = (req, res, next) => {
+  const { title, description, coordinates, address, creator } = req.body
+  const newPlace = {
+    id: uuid(),
+    title,
+    description,
+    location: coordinates,
+    address,
+    creator
+  }
+
+  DUMMY_PLACES.push(newPlace)
+  res.status(201).json({ place: newPlace })
+}
+
+const updatePlace = (req, res, next) => {
+  const { title, description } = req.body;
+  const placeId = req.params.pid;
+
+  const placeToUpdate = { ...DUMMY_PLACES.find(p => p.id === placeId) }
+  const placeIndex = DUMMY_PLACES.findIndex(p => p.id === placeId);
+  // It looks like you're changing a constant! In fact the const is a reference
+  // to an object and we changing the data in the object
+  placeToUpdate.title = title
+  placeToUpdate.description = description
+
+  DUMMY_PLACES[placeIndex] = placeToUpdate
+
+  res.json({ placeToUpdate })
+}
+
+const deletePlace = (req, res, next) => {
+  const placeId = req.body.pid
+  DUMMY_PLACES = DUMMY_PLACES.filter(p => p.id !== placeId)
+  res.json({ message: 'Deleted Place.'})
+}
+
 module.exports = {
     getPlaceById,
-    getPlaceByUserId
+    getPlaceByUserId,
+    createPlace,
+    updatePlace,
+    deletePlace
 }
