@@ -1,5 +1,6 @@
 const HttpError = require("../models/http-error");
 const uuid = require('uuid/v4')
+const { validationResult } = require('express-validator')
 
 //This is temporary - will be replaced by the database
 let DUMMY_PLACES = [
@@ -45,6 +46,12 @@ const getPlacesByUserId = (req, res, next) => {
 };
 
 const createPlace = (req, res, next) => {
+  const validationErrors = validationResult(req)
+  if (!validationErrors.isEmpty()) {
+    console.log(validationErrors)
+    throw new HttpError('Invalid inputs, please check your entry.', 422)
+  }
+
   const { title, description, coordinates, address, creator } = req.body
   const newPlace = {
     id: uuid(),
@@ -60,6 +67,12 @@ const createPlace = (req, res, next) => {
 }
 
 const updatePlace = (req, res, next) => {
+  const validationErrors = validationResult(req);
+  if (!validationErrors.isEmpty()) {
+    console.log(validationErrors);
+    throw new HttpError("Invalid inputs, please check your entry.", 422);
+  }
+  
   const { title, description } = req.body;
   const placeId = req.params.pid;
 
@@ -77,6 +90,10 @@ const updatePlace = (req, res, next) => {
 
 const deletePlace = (req, res, next) => {
   const placeId = req.body.pid
+  if (DUMMY_PLACES.find(p => p.id === placeId)) {
+    throw new HttpError('Could not find a place with that ID.')
+  }
+  
   DUMMY_PLACES = DUMMY_PLACES.filter(p => p.id !== placeId)
   res.json({ message: 'Deleted Place.'})
 }
