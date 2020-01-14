@@ -2,6 +2,8 @@ const HttpError = require("../models/http-error");
 const uuid = require('uuid/v4')
 const { validationResult } = require('express-validator')
 
+const geocode = require('../utils/geocode')
+
 //This is temporary - will be replaced by the database
 let DUMMY_PLACES = [
     {
@@ -45,25 +47,34 @@ const getPlacesByUserId = (req, res, next) => {
   res.json({ places });
 };
 
-const createPlace = (req, res, next) => {
+const createPlace = async (req, res, next) => {
   const validationErrors = validationResult(req)
   if (!validationErrors.isEmpty()) {
     console.log(validationErrors)
-    throw new HttpError('Invalid inputs, please check your entry.', 422)
+    return next(new HttpError('Invalid inputs, please check your entry.', 422))
   }
 
-  const { title, description, coordinates, address, creator } = req.body
-  const newPlace = {
-    id: uuid(),
-    title,
-    description,
-    location: coordinates,
-    address,
-    creator
-  }
+  const { title, description, address, creator } = req.body
+  
+  geocode(address, (error, { latitude, longitude }) => {
+    if (error) {
+      return console.log(error)
+    }
+    const coordinates = { lat: latitude, lng: longitude }
+    // console.log(coordinates)
 
-  DUMMY_PLACES.push(newPlace)
-  res.status(201).json({ place: newPlace })
+    const newPlace = {
+      id: uuid(),
+      title,
+      description,
+      location: coordinates,
+      address,
+      creator
+    };
+
+    DUMMY_PLACES.push(newPlace);
+    res.status(201).json({ place: newPlace });
+  })
 }
 
 const updatePlace = (req, res, next) => {
@@ -93,7 +104,7 @@ const deletePlace = (req, res, next) => {
   if (DUMMY_PLACES.find(p => p.id === placeId)) {
     throw new HttpError('Could not find a place with that ID.')
   }
-  
+
   DUMMY_PLACES = DUMMY_PLACES.filter(p => p.id !== placeId)
   res.json({ message: 'Deleted Place.'})
 }
