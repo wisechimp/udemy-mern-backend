@@ -94,11 +94,11 @@ const createPlace = async (req, res, next) => {
       return next(error)
     }
 
-    res.status(201).json({ place: newPlace });
+    res.status(201).json({ newPlace: newPlace.toObject({ getters: true }) });
   })
 }
 
-const updatePlace = (req, res, next) => {
+const updatePlace = async (req, res, next) => {
   const validationErrors = validationResult(req);
   if (!validationErrors.isEmpty()) {
     console.log(validationErrors);
@@ -108,16 +108,29 @@ const updatePlace = (req, res, next) => {
   const { title, description } = req.body;
   const placeId = req.params.pid;
 
-  const placeToUpdate = { ...DUMMY_PLACES.find(p => p.id === placeId) }
-  const placeIndex = DUMMY_PLACES.findIndex(p => p.id === placeId);
-  // It looks like you're changing a constant! In fact the const is a reference
-  // to an object and we changing the data in the object
+  let placeToUpdate
+
+  try {
+    placeToUpdate = await Place.findById(placeId)
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not find a place",
+      500
+    );
+    return next(error);
+  }
+
   placeToUpdate.title = title
   placeToUpdate.description = description
 
-  DUMMY_PLACES[placeIndex] = placeToUpdate
+  try {
+    await placeToUpdate.save()
+  } catch (err) {
+    const error = new HttpError("Updating place failed, please try again", 500);
+    return next(error);
+  }
 
-  res.json({ placeToUpdate })
+  res.json({ placeToUpdate: placeToUpdate.toObject({ getters: true }) })
 }
 
 const deletePlace = (req, res, next) => {
