@@ -4,21 +4,6 @@ const HttpError = require("../models/http-error");
 const geocode = require('../utils/geocode')
 const Place = require('../models/place')
 
-//This is temporary - will be replaced by the database
-let DUMMY_PLACES = [
-    {
-        id: 'p1',
-        title: 'Empire State Building',
-        description: 'Scene of a heinous murder!',
-        location: {
-            lat: 40.7484474,
-            lng: -73.9871516
-        },
-        address: '20 W 34th St, New York, NY 10001',
-        creator: 'u1'
-    }
-]
-
 const getPlaceById = async (req, res, next) => {
   const placeId = req.params.pid;
   let place
@@ -133,13 +118,30 @@ const updatePlace = async (req, res, next) => {
   res.json({ placeToUpdate: placeToUpdate.toObject({ getters: true }) })
 }
 
-const deletePlace = (req, res, next) => {
-  const placeId = req.body.pid
-  if (DUMMY_PLACES.find(p => p.id === placeId)) {
-    throw new HttpError('Could not find a place with that ID.')
+const deletePlace = async (req, res, next) => {
+  const placeId = req.params.pid
+  let place
+
+  try {
+    place = await Place.findById(placeId);
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not find a place",
+      500
+    );
+    return next(error);
   }
 
-  DUMMY_PLACES = DUMMY_PLACES.filter(p => p.id !== placeId)
+    try {
+    await place.remove()
+  } catch (err) {
+    const error = new HttpError(
+      "Something went wrong, could not delete the place",
+      500
+    );
+    return next(error);
+  }
+  
   res.json({ message: 'Deleted Place.'})
 }
 
