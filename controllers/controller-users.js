@@ -23,7 +23,7 @@ const createUser = async (req, res, next) => {
       return next(new HttpError("Invalid inputs, please check your entry.", 422))
     }
 
-    const { name, email, password, places } = req.body
+    const { name, email, password } = req.body
 
     let existingUser
     try {
@@ -44,7 +44,7 @@ const createUser = async (req, res, next) => {
       password,
       image:
         "https://pbs.twimg.com/profile_images/1002712133/Questioning_400x400.jpg",
-      places
+      places: []
     });
 
     try {
