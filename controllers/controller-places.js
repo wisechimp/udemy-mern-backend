@@ -87,7 +87,7 @@ const updatePlace = async (req, res, next) => {
   const validationErrors = validationResult(req);
   if (!validationErrors.isEmpty()) {
     console.log(validationErrors);
-    throw new HttpError("Invalid inputs, please check your entry.", 422);
+    return next(new HttpError("Invalid inputs, please check your entry.", 422));
   }
   
   const { title, description } = req.body;
