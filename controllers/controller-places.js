@@ -1,8 +1,8 @@
-const HttpError = require("../models/http-error");
-const uuid = require('uuid/v4')
 const { validationResult } = require('express-validator')
 
+const HttpError = require("../models/http-error");
 const geocode = require('../utils/geocode')
+const Place = require('../models/place')
 
 //This is temporary - will be replaced by the database
 let DUMMY_PLACES = [
@@ -19,32 +19,46 @@ let DUMMY_PLACES = [
     }
 ]
 
-const getPlaceById = (req, res, next) => {
+const getPlaceById = async (req, res, next) => {
   const placeId = req.params.pid;
-  const place = DUMMY_PLACES.find(p => {
-    return p.id === placeId;
-  });
+  let place
 
-  if (!place) {
-    return next(
-      new HttpError("Could not find a place for the provided id", 404)
-    );
+  // If we wanted a promise we can chain exec() not needed here
+  // This catch error occurs if the get request fails
+  try {
+    place = await Place.findById(placeId)
+  } catch (err) {
+    const error = new HttpError('Something went wrong, could not find a place', 500)
+    return next(error)
   }
 
-  res.json({ place });
+  // This different error occurs if the place doesn't exist
+  if (!place) {
+    const error = new HttpError("Could not find that place", 404)
+    return next(error)
+  }
+
+  // Getters true converts the _id to id with type of string rather than object
+  res.json({ place: place.toObject({ getters: true }) });
 };
 
-const getPlacesByUserId = (req, res, next) => {
+const getPlacesByUserId = async (req, res, next) => {
   const userId = req.params.uid;
-  const places = DUMMY_PLACES.filter(place => {
-    return place.creator === userId;
-  });
+  let places
+
+  try {
+    places = await Place.find( {creator: userId })
+  } catch (err) {
+    const error = new HttpError('Something went wrong we couldn\'t find that user\'s places', 500)
+    return next(error)
+  }
 
   if (!places || places.length === 0) {
     return next(new HttpError("Could not find a place for that user id", 404));
   }
 
-  res.json({ places });
+  // Getters true converts the _id to id with type of string rather than object
+  res.json({ places: places.map(place => place.toObject({ getters: true })) });
 };
 
 const createPlace = async (req, res, next) => {
@@ -63,16 +77,23 @@ const createPlace = async (req, res, next) => {
     const coordinates = { lat: latitude, lng: longitude }
     // console.log(coordinates)
 
-    const newPlace = {
-      id: uuid(),
+    const newPlace = new Place({
       title,
       description,
-      location: coordinates,
       address,
+      location: coordinates,
+      image:
+        "https://www.filminquiry.com/wp-content/uploads/2017/03/king-kong-1976-dead.jpg",
       creator
-    };
+    });
 
-    DUMMY_PLACES.push(newPlace);
+    try {
+      newPlace.save()
+    } catch (err) {
+      const error = new HttpError('Creating Place failed, please try again', 500)
+      return next(error)
+    }
+
     res.status(201).json({ place: newPlace });
   })
 }
