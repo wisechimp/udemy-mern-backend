@@ -42,8 +42,7 @@ const createUser = async (req, res, next) => {
       name,
       email,
       password,
-      image:
-        "https://pbs.twimg.com/profile_images/1002712133/Questioning_400x400.jpg",
+      image: req.file.path,
       places: []
     });
 

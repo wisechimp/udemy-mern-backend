@@ -1,3 +1,4 @@
+const fs = require('fs')
 const express = require('express')
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
@@ -29,14 +30,20 @@ app.use((req, res, next) => {
 // Express recognises this as a middleware function that may
 // give an error and makes this the default action 
 app.use((error, req, res, next) => {
-    if (res.headerSent) {
-        return next(error)
-    }
-
-    res.status(error.code || 500)
-    res.json({
-        message: error.message || 'An unknown error occurred'
+  if (req.file) {
+    fs.unlink(req.file.path, (err) => {
+      console.log(err)
     })
+  }
+
+  if (res.headerSent) {
+      return next(error)
+  }
+
+  res.status(error.code || 500)
+  res.json({
+      message: error.message || 'An unknown error occurred'
+  })
 })
 
 mongoose
