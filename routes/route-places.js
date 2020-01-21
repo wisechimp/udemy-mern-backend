@@ -3,12 +3,15 @@ const { check } = require('express-validator') // Like this!
 
 const placeControllers = require('../controllers/controller-places')
 const fileUpload = require("../middleware/file-upload");
+const checkAuth = require('../middleware/check-auth')
 
 const router = express.Router()
 
 router.get('/:pid', placeControllers.getPlaceById)
 
 router.get('/user/:uid', placeControllers.getPlacesByUserId)
+
+router.use(checkAuth)
 
 // Not restricted to one middleware
 // Actioned from left to right
