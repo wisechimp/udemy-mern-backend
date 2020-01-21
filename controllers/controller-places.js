@@ -126,7 +126,6 @@ const updatePlace = async (req, res, next) => {
   const placeId = req.params.pid;
 
   let placeToUpdate
-
   try {
     placeToUpdate = await Place.findById(placeId)
   } catch (err) {
@@ -135,6 +134,12 @@ const updatePlace = async (req, res, next) => {
       500
     );
     return next(error);
+  }
+
+  if (placeToUpdate.creator.toString() !== req.userData.userId) {
+    return next(
+      new HttpError("You are not allowed to perform that action here!", 401)
+    );
   }
 
   placeToUpdate.title = title
@@ -153,7 +158,6 @@ const updatePlace = async (req, res, next) => {
 const deletePlace = async (req, res, next) => {
   const placeId = req.params.pid
   let place
-
   try {
     place = await Place.findById(placeId).populate('creator');
   } catch (err) {
@@ -166,6 +170,12 @@ const deletePlace = async (req, res, next) => {
 
   if (!place) {
     return next(new HttpError('Could not find a place with this ID', 404))
+  }
+
+  if (place.creator.id !== req.userData.userId) {
+    return next(
+      new HttpError("You are not allowed to perform that action here!", 401)
+    )
   }
 
   const imagePath = place.image
