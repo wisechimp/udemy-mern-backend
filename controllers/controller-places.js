@@ -77,8 +77,7 @@ const createPlace = async (req, res, next) => {
     description,
     address,
     location: coordinates,
-    image:
-      "https://www.filminquiry.com/wp-content/uploads/2017/03/king-kong-1976-dead.jpg",
+    image: req.file.path,
     creator
   });
 
