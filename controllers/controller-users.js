@@ -69,7 +69,7 @@ const createUser = async (req, res, next) => {
 
     let token
     try {
-        token = jwt.sign(
+        token = await jwt.sign(
           { userId: newUser.id, email: newUser.email },
           process.env.JWTPRIVATEKEY,
           { expiresIn: "1h" }
