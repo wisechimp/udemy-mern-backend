@@ -26,6 +26,8 @@ app.use('/uploads/images', express.static(path.join('uploads', 'images')))
 
 app.use(cors())
 
+app.options('/api', cors()) // to enable preflight
+
 app.use('/api/places', placesRoutes)
 app.use('/api/users', usersRoutes)
 
